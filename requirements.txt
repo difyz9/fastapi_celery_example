@@ -1,0 +1,10 @@
+# requirements.txt - 项目依赖
+celery==5.5.3
+redis==6.4.0
+click==8.2.1
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+requests==2.31.0
+flower==2.0.1
+typing-extensions==4.12.2

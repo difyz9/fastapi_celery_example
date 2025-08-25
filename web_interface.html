@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学运算任务链 - Web界面</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        
+        .task-list {
+            margin-top: 20px;
+        }
+        
+        .task-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .status-pending { border-left-color: #ffc107; }
+        .status-completed { border-left-color: #28a745; }
+        .status-failed { border-left-color: #dc3545; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chain-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 数学运算任务链系统</h1>
+        
+        <div class="grid">
+            <div>
+                <h2>📝 提交新任务</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="inputA">数值 A:</label>
+                        <input type="number" id="inputA" value="10" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inputB">数值 B:</label>
+                        <input type="number" id="inputB" value="5" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="operationChain">任务链类型:</label>
+                        <select id="operationChain" required>
+                            <option value="add_multiply_divide">加法 → 乘法 → 除法</option>
+                            <option value="power_sqrt">幂运算 → 开方</option>
+                            <option value="complex_math">复杂数学运算</option>
+                        </select>
+                        
+                        <div class="chain-info" id="chainInfo">
+                            选择任务链查看详细说明
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="submitBtn">🚀 提交任务</button>
+                </form>
+                
+                <div id="submitResult"></div>
+            </div>
+            
+            <div>
+                <h2>📊 任务状态查询</h2>
+                <div class="form-group">
+                    <label for="taskId">任务ID:</label>
+                    <input type="text" id="taskId" placeholder="输入任务ID查询状态">
+                </div>
+                <button onclick="queryTaskStatus()" id="queryBtn">🔍 查询状态</button>
+                
+                <div id="statusResult"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>📋 最近任务列表</h2>
+        <button onclick="loadTaskList()" id="refreshBtn">🔄 刷新列表</button>
+        <div id="taskList"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        // 任务链说明
+        const chainDescriptions = {
+            'add_multiply_divide': '计算流程: (A + B) → 结果 × 2 → 结果 ÷ 3',
+            'power_sqrt': '计算流程: A^B → √结果',
+            'complex_math': '计算流程: (A + B) → 结果 × A → 结果 - B → 结果 ÷ 2'
+        };
+        
+        // 更新任务链说明
+        document.getElementById('operationChain').addEventListener('change', function() {
+            const chain = this.value;
+            const info = chainDescriptions[chain] || '选择任务链查看详细说明';
+            document.getElementById('chainInfo').textContent = info;
+        });
+        
+        // 初始化显示
+        document.getElementById('chainInfo').textContent = chainDescriptions['add_multiply_divide'];
+        
+        // 提交任务
+        document.getElementById('taskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('submitResult');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ 提交中...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        a: parseInt(document.getElementById('inputA').value),
+                        b: parseInt(document.getElementById('inputB').value),
+                        operation_chain: document.getElementById('operationChain').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ 任务提交成功!</h3>
+                            <p><strong>任务ID:</strong> ${data.task_id}</p>
+                            <p><strong>状态:</strong> ${data.status}</p>
+                            <p><strong>消息:</strong> ${data.message}</p>
+                            <pre>${JSON.stringify(data.request_data, null, 2)}</pre>
+                        </div>
+                    `;
+                    
+                    // 自动填入任务ID到查询框
+                    document.getElementById('taskId').value = data.task_id;
+                    
+                    // 5秒后自动查询状态
+                    setTimeout(() => queryTaskStatus(), 2000);
+                    
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ 提交失败</h3>
+                            <p>${data.detail}</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ 网络错误</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🚀 提交任务';
+        });
+        
+        // 查询任务状态
+        async function queryTaskStatus() {
+            const taskId = document.getElementById('taskId').value.trim();
+            const resultDiv = document.getElementById('statusResult');
+            const queryBtn = document.getElementById('queryBtn');
+            
+            if (!taskId) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <p>请输入任务ID</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            queryBtn.disabled = true;
+            queryBtn.textContent = '🔍 查询中...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/status/${taskId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const statusClass = data.status === 'completed' ? 'success' : 
+                                      data.status === 'failed' ? 'error' : 'result';
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result ${statusClass}">
+                            <h3>📊 任务状态</h3>
+                            <p><strong>任务ID:</strong> ${data.task_id}</p>
+                            <p><strong>状态:</strong> ${data.status}</p>
+                            <p><strong>输入数据:</strong> A=${data.input_data.a}, B=${data.input_data.b}</p>
+                            <p><strong>任务链:</strong> ${data.input_data.operation_chain}</p>
+                            <p><strong>创建时间:</strong> ${data.created_at}</p>
+                            ${data.updated_at ? `<p><strong>更新时间:</strong> ${data.updated_at}</p>` : ''}
+                            ${data.result !== null ? `<p><strong>结果:</strong> ${data.result}</p>` : ''}
+                            ${data.error ? `<p><strong>错误:</strong> ${data.error}</p>` : ''}
+                        </div>
+                    `;
+                    
+                    // 如果任务还在进行中，3秒后自动再次查询
+                    if (data.status === 'pending') {
+                        setTimeout(() => queryTaskStatus(), 3000);
+                    }
+                    
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ 查询失败</h3>
+                            <p>${data.detail}</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ 网络错误</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            queryBtn.disabled = false;
+            queryBtn.textContent = '🔍 查询状态';
+        }
+        
+        // 加载任务列表
+        async function loadTaskList() {
+            const listDiv = document.getElementById('taskList');
+            const refreshBtn = document.getElementById('refreshBtn');
+            
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '🔄 加载中...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/tasks?limit=10`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.tasks.length === 0) {
+                        listDiv.innerHTML = '<p>暂无任务记录</p>';
+                    } else {
+                        listDiv.innerHTML = `
+                            <p>共 ${data.total} 个任务，显示最近 ${data.tasks.length} 个:</p>
+                            ${data.tasks.map(task => `
+                                <div class="task-item status-${task.status}">
+                                    <p><strong>ID:</strong> ${task.task_id}</p>
+                                    <p><strong>输入:</strong> A=${task.input_a}, B=${task.input_b}</p>
+                                    <p><strong>任务链:</strong> ${task.operation_chain}</p>
+                                    <p><strong>状态:</strong> ${task.status}</p>
+                                    <p><strong>创建时间:</strong> ${task.created_at}</p>
+                                    <button onclick="document.getElementById('taskId').value='${task.task_id}'; queryTaskStatus();" 
+                                            style="width: auto; padding: 5px 10px; font-size: 12px;">
+                                        查看详情
+                                    </button>
+                                </div>
+                            `).join('')}
+                        `;
+                    }
+                } else {
+                    listDiv.innerHTML = `
+                        <div class="result error">
+                            <p>加载失败: ${data.detail}</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                listDiv.innerHTML = `
+                    <div class="result error">
+                        <p>网络错误: ${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = '🔄 刷新列表';
+        }
+        
+        // 页面加载时自动获取任务列表
+        window.addEventListener('load', () => {
+            loadTaskList();
+        });
+    </script>
+</body>
+</html>

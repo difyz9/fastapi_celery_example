@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试调试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 8px 16px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 API测试调试页面</h1>
+        
+        <div class="test-section">
+            <h2>📊 数学任务测试</h2>
+            <button onclick="testMathSubmit()">测试数学任务提交</button>
+            <button onclick="testMathStatus()">测试状态查询</button>
+            <div id="mathResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎬 Bilibili任务测试</h2>
+            <button onclick="testBilibiliSubmit()">测试Bilibili任务提交</button>
+            <button onclick="testBilibiliStatus()">测试Bilibili状态查询</button>
+            <div id="bilibiliResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 任务列表测试</h2>
+            <button onclick="testTaskList()">获取任务列表</button>
+            <div id="taskListResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentTaskId = null;
+        let currentBilibiliTaskId = null;
+
+        // 数学任务测试
+        async function testMathSubmit() {
+            const resultDiv = document.getElementById('mathResult');
+            try {
+                resultDiv.innerHTML = '<p>⏳ 提交数学任务中...</p>';
+                
+                const response = await fetch(`${API_BASE}/math/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        a: Math.floor(Math.random() * 20) + 1,
+                        b: Math.floor(Math.random() * 10) + 1,
+                        operation_chain: 'add_multiply_divide'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('数学任务提交响应:', data);
+                
+                if (response.ok) {
+                    currentTaskId = data.task_id;
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ 数学任务提交成功</h4>
+                            <p><strong>任务ID:</strong> ${data.task_id}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ 数学任务提交失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('数学任务提交错误:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ 网络错误</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testMathStatus() {
+            const resultDiv = document.getElementById('mathResult');
+            if (!currentTaskId) {
+                resultDiv.innerHTML = '<div class="result error"><p>请先提交一个数学任务</p></div>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML += '<p>⏳ 查询任务状态中...</p>';
+                
+                const response = await fetch(`${API_BASE}/tasks/${currentTaskId}/status`);
+                const data = await response.json();
+                console.log('状态查询响应:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML += `
+                        <div class="result success">
+                            <h4>✅ 状态查询成功</h4>
+                            <p><strong>状态:</strong> ${data.status}</p>
+                            <p><strong>结果:</strong> ${data.result}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML += `
+                        <div class="result error">
+                            <h4>❌ 状态查询失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('状态查询错误:', error);
+                resultDiv.innerHTML += `
+                    <div class="result error">
+                        <h4>❌ 状态查询网络错误</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Bilibili任务测试
+        async function testBilibiliSubmit() {
+            const resultDiv = document.getElementById('bilibiliResult');
+            try {
+                resultDiv.innerHTML = '<p>⏳ 提交Bilibili任务中...</p>';
+                
+                const response = await fetch(`${API_BASE}/bilibili/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: `调试测试视频 ${new Date().getTime()}`,
+                        aid: Math.floor(Math.random() * 1000000),
+                        bvid: `BV1debug${Math.floor(Math.random() * 1000)}`,
+                        cid: Math.floor(Math.random() * 1000000),
+                        author: "调试测试UP主",
+                        currentPart: 1,
+                        isCollection: false,
+                        totalParts: 1,
+                        url: "https://www.bilibili.com/video/BV1debug",
+                        duration: 300,
+                        submittedAt: new Date().toISOString(),
+                        source: "debug_test",
+                        currentPlayTime: 0
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Bilibili任务提交响应:', data);
+                
+                if (response.ok) {
+                    currentBilibiliTaskId = data.task_id;
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Bilibili任务提交成功</h4>
+                            <p><strong>任务ID:</strong> ${data.task_id}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Bilibili任务提交失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Bilibili任务提交错误:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ 网络错误</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testBilibiliStatus() {
+            const resultDiv = document.getElementById('bilibiliResult');
+            if (!currentBilibiliTaskId) {
+                resultDiv.innerHTML = '<div class="result error"><p>请先提交一个Bilibili任务</p></div>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML += '<p>⏳ 查询Bilibili任务状态中...</p>';
+                
+                const response = await fetch(`${API_BASE}/tasks/${currentBilibiliTaskId}/status`);
+                const data = await response.json();
+                console.log('Bilibili状态查询响应:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML += `
+                        <div class="result success">
+                            <h4>✅ Bilibili状态查询成功</h4>
+                            <p><strong>状态:</strong> ${data.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML += `
+                        <div class="result error">
+                            <h4>❌ Bilibili状态查询失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Bilibili状态查询错误:', error);
+                resultDiv.innerHTML += `
+                    <div class="result error">
+                        <h4>❌ Bilibili状态查询网络错误</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 任务列表测试
+        async function testTaskList() {
+            const resultDiv = document.getElementById('taskListResult');
+            try {
+                resultDiv.innerHTML = '<p>⏳ 获取任务列表中...</p>';
+                
+                const response = await fetch(`${API_BASE}/tasks?limit=5`);
+                const data = await response.json();
+                console.log('任务列表响应:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ 任务列表获取成功</h4>
+                            <p><strong>总数:</strong> ${data.total}</p>
+                            <p><strong>返回数量:</strong> ${data.tasks ? data.tasks.length : 0}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ 任务列表获取失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('任务列表获取错误:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ 网络错误</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 页面加载完成后的初始化
+        window.addEventListener('load', function() {
+            console.log('🚀 API测试页面已加载');
+            console.log('API_BASE:', API_BASE);
+        });
+    </script>
+</body>
+</html>

@@ -25,18 +25,15 @@ app.conf.update(
         'tasks.math_tasks.*': {'queue': 'math'},
         'tasks.data_tasks.*': {'queue': 'data'},
         'tasks.io_tasks.*': {'queue': 'io'},
+        'bilibili.*': {'queue': 'bilibili'},  # 修正Bilibili任务路由
         'add_multiply_divide': {'queue': 'math'},
         'power_sqrt': {'queue': 'math'},
         'complex_math': {'queue': 'math'},
     }
 )
 
-# 自动发现任务 - 更灵活的方式
-app.autodiscover_tasks([
-    'tasks.math_tasks',
-    'tasks.data_tasks',  
-    'tasks.io_tasks'
-], force=True)
+# 自动发现任务 - 使用包名而不是模块路径
+app.autodiscover_tasks(['tasks'], force=True)
 
 # 输出配置信息
 print(f"✅ Celery应用启动完成")

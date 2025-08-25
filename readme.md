@@ -93,6 +93,10 @@ source venv/bin/activate
 
 # 启动Celery Worker
 celery -A celery_app worker --loglevel=info
+
+celery -A celery_app worker --loglevel=info --queues=celery,math,data,io,bilibili --concurrency=4
+
+
 ```
 
 ### 2. 启动FastAPI后端服务 (终端2)

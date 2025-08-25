@@ -3,3 +3,4 @@
 from . import math_tasks
 from . import data_tasks  
 from . import io_tasks
+from . import bilibili_tasks

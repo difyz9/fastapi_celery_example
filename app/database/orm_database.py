@@ -49,7 +49,7 @@ class ORMDatabaseManager:
     
     def save_task_record(self, task_id: str, input_a: int, input_b: int, 
                         operation_chain: str, celery_task_id: str) -> TaskRecord:
-        """保存任务记录到数据库"""
+        """保存数学任务记录到数据库"""
         with self.get_session() as session:
             try:
                 task_record = TaskRecord(
@@ -66,12 +66,47 @@ class ORMDatabaseManager:
                 session.commit()
                 session.refresh(task_record)
                 
-                print(f"✅ 任务记录已保存: {task_id}")
+                print(f"✅ 数学任务记录已保存: {task_id}")
                 return task_record
                 
             except SQLAlchemyError as e:
                 session.rollback()
                 print(f"❌ 保存任务记录失败: {e}")
+                raise
+    
+    def save_bilibili_task_record(self, task_id: str, video_data: Dict[str, Any], 
+                                 chain_name: str, celery_task_id: str) -> TaskRecord:
+        """保存Bilibili视频任务记录到数据库"""
+        with self.get_session() as session:
+            try:
+                # 将Bilibili视频数据适配到TaskRecord模型
+                task_record = TaskRecord(
+                    id=task_id,
+                    input_a=video_data.get('aid', 0),  # 使用AID作为input_a
+                    input_b=video_data.get('cid', 0),  # 使用CID作为input_b
+                    operation_chain=chain_name,
+                    celery_task_id=celery_task_id,
+                    status='pending',
+                    created_at=datetime.now()
+                )
+                
+                # 将视频数据存储在result字段中
+                task_record.set_result({
+                    "task_type": "bilibili_video",
+                    "video_data": video_data,
+                    "chain_name": chain_name
+                })
+                
+                session.add(task_record)
+                session.commit()
+                session.refresh(task_record)
+                
+                print(f"✅ Bilibili任务记录已保存: {task_id} (视频: {video_data.get('title', 'Unknown')})")
+                return task_record
+                
+            except SQLAlchemyError as e:
+                session.rollback()
+                print(f"❌ 保存Bilibili任务记录失败: {e}")
                 raise
     
     def update_task_status(self, task_id: str, status: str, 

@@ -12,16 +12,16 @@ class TaskService:
         self.chain_service = ChainService()
     
     def submit_task(self, a: int, b: int, operation_chain: str) -> Dict[str, Any]:
-        """提交任务"""
+        """提交数学任务"""
         # 验证任务链
-        if not self.chain_service.is_valid_chain(operation_chain):
-            raise ValueError(f"不支持的任务链: {operation_chain}")
+        if operation_chain not in self.chain_service.OPERATION_CHAINS:
+            raise ValueError(f"不支持的数学任务链: {operation_chain}")
         
         # 生成任务ID
         task_id = str(uuid.uuid4())
         
         # 创建任务链
-        task_chain = self.chain_service.create_chain(operation_chain, a, b)
+        task_chain = self.chain_service.create_math_chain(operation_chain, a, b)
         
         # 提交到Celery
         celery_result = task_chain.apply_async()
@@ -42,6 +42,43 @@ class TaskService:
             "celery_task_id": celery_task_id,
             "description": self.chain_service.get_chain_description(operation_chain),
             "task_record": task_record
+        }
+    
+    def submit_bilibili_task(self, video_data: Dict[str, Any], chain_name: str = "video_processing_chain") -> Dict[str, Any]:
+        """提交Bilibili视频处理任务"""
+        # 验证任务链
+        if chain_name not in self.chain_service.BILIBILI_CHAINS:
+            raise ValueError(f"不支持的Bilibili任务链: {chain_name}")
+        
+        # 生成任务ID
+        task_id = str(uuid.uuid4())
+        
+        # 创建任务链
+        task_chain = self.chain_service.create_bilibili_chain(chain_name, video_data)
+        
+        # 提交到Celery
+        celery_result = task_chain.apply_async()
+        celery_task_id = celery_result.id
+        
+        # 保存到数据库 - 为Bilibili任务创建特殊记录
+        task_record = self.db_manager.save_bilibili_task_record(
+            task_id=task_id,
+            video_data=video_data,
+            chain_name=chain_name,
+            celery_task_id=celery_task_id
+        )
+        
+        return {
+            "task_id": task_id,
+            "celery_result": celery_result,
+            "celery_task_id": celery_task_id,
+            "description": self.chain_service.get_chain_description(chain_name),
+            "task_record": task_record,
+            "video_info": {
+                "bvid": video_data.get("bvid"),
+                "title": video_data.get("title"),
+                "author": video_data.get("author")
+            }
         }
     
     def get_task_status(self, task_id: str) -> Dict[str, Any]:
@@ -79,7 +116,7 @@ class TaskService:
         """监控Celery任务状态并更新数据库"""
         try:
             # 等待任务完成
-            result = celery_result.get(timeout=60)  # 60秒超时
+            result = celery_result.get(timeout=300)  # 5分钟超时（Bilibili任务需要更长时间）
             
             # 更新数据库状态为成功
             self.db_manager.update_task_status(task_id, 'completed', result)

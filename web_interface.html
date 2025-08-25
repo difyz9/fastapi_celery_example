@@ -216,7 +216,7 @@
             submitBtn.textContent = '⏳ 提交中...';
             
             try {
-                const response = await fetch(`${API_BASE}/submit`, {
+                const response = await fetch(`${API_BASE}/math/submit`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -288,7 +288,7 @@
             queryBtn.textContent = '🔍 查询中...';
             
             try {
-                const response = await fetch(`${API_BASE}/status/${taskId}`);
+                const response = await fetch(`${API_BASE}/tasks/${taskId}/status`);
                 const data = await response.json();
                 
                 if (response.ok) {
@@ -300,11 +300,13 @@
                             <h3>📊 任务状态</h3>
                             <p><strong>任务ID:</strong> ${data.task_id}</p>
                             <p><strong>状态:</strong> ${data.status}</p>
-                            <p><strong>输入数据:</strong> A=${data.input_data.a}, B=${data.input_data.b}</p>
-                            <p><strong>任务链:</strong> ${data.input_data.operation_chain}</p>
+                            ${data.input_data ? `
+                                <p><strong>输入数据:</strong> A=${data.input_data.a}, B=${data.input_data.b}</p>
+                                <p><strong>任务链:</strong> ${data.input_data.operation_chain}</p>
+                            ` : ''}
                             <p><strong>创建时间:</strong> ${data.created_at}</p>
                             ${data.updated_at ? `<p><strong>更新时间:</strong> ${data.updated_at}</p>` : ''}
-                            ${data.result !== null ? `<p><strong>结果:</strong> ${data.result}</p>` : ''}
+                            ${data.result !== null && data.result !== undefined ? `<p><strong>结果:</strong> ${data.result}</p>` : ''}
                             ${data.error ? `<p><strong>错误:</strong> ${data.error}</p>` : ''}
                         </div>
                     `;
@@ -324,10 +326,12 @@
                 }
                 
             } catch (error) {
+                console.error('查询任务状态时发生错误:', error);
                 resultDiv.innerHTML = `
                     <div class="result error">
                         <h3>❌ 网络错误</h3>
-                        <p>${error.message}</p>
+                        <p>错误详情: ${error.message}</p>
+                        <p>请检查网络连接和服务器状态</p>
                     </div>
                 `;
             }

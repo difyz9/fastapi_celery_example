@@ -11,25 +11,25 @@ class ChainService:
         "add_multiply_divide": {
             "description": "加法 -> 乘法 -> 除法",
             "chain": lambda a, b: chain(
-                celery_app.signature('math.add', args=[a, b]),      # a + b
-                celery_app.signature('math.multiply', args=[2]),    # 结果 * 2
-                celery_app.signature('math.divide', args=[3])       # 结果 / 3
+                celery_app.tasks['math.add'].s(a, b),      # a + b
+                celery_app.tasks['math.multiply'].s(2),    # 结果 * 2
+                celery_app.tasks['math.divide'].s(3)       # 结果 / 3
             )
         },
         "power_sqrt": {
             "description": "幂运算 -> 开方",
             "chain": lambda a, b: chain(
-                celery_app.signature('math.power', args=[a, b]),    # a ^ b
-                celery_app.signature('math.sqrt')                   # √结果
+                celery_app.tasks['math.power'].s(a, b),    # a ^ b
+                celery_app.tasks['math.sqrt'].s()          # √结果
             )
         },
         "complex_math": {
             "description": "复杂数学运算链",
             "chain": lambda a, b: chain(
-                celery_app.signature('math.add', args=[a, b]),          # a + b
-                celery_app.signature('math.multiply', args=[a]),        # 结果 * a
-                celery_app.signature('math.subtract', args=[b]),        # 结果 - b
-                celery_app.signature('math.divide', args=[2])           # 结果 / 2
+                celery_app.tasks['math.add'].s(a, b),          # a + b
+                celery_app.tasks['math.multiply'].s(a),        # 结果 * a
+                celery_app.tasks['math.subtract'].s(b),        # 结果 - b
+                celery_app.tasks['math.divide'].s(2)           # 结果 / 2
             )
         }
     }
@@ -47,15 +47,15 @@ class ChainService:
             ],
             "chain": lambda video_data: chain(
                 # 第一步：下载字幕（传入完整video_data）
-                celery_app.signature('bilibili.download_subtitle', args=[video_data]),
+                celery_app.tasks['bilibili.download_subtitle'].s(video_data),
                 # 第二步：检查字幕内容（接收第一步的结果）
-                celery_app.signature('bilibili.check_subtitle_content'),
+                celery_app.tasks['bilibili.check_subtitle_content'].s(),
                 # 第三步：翻译字幕（接收第二步的结果）
-                celery_app.signature('bilibili.translate_subtitle'),
+                celery_app.tasks['bilibili.translate_subtitle'].s(),
                 # 第四步：生成语音（接收第三步的结果）
-                celery_app.signature('bilibili.generate_speech'),
+                celery_app.tasks['bilibili.generate_speech'].s(),
                 # 第五步：上传到COS（接收第四步的结果）
-                celery_app.signature('bilibili.upload_to_cos')
+                celery_app.tasks['bilibili.upload_to_cos'].s()
             )
         },
         "subtitle_only_chain": {
@@ -66,9 +66,9 @@ class ChainService:
                 "bilibili.translate_subtitle"
             ],
             "chain": lambda video_data: chain(
-                celery_app.signature('bilibili.download_subtitle', args=[video_data]),
-                celery_app.signature('bilibili.check_subtitle_content'),
-                celery_app.signature('bilibili.translate_subtitle')
+                celery_app.tasks['bilibili.download_subtitle'].s(video_data),
+                celery_app.tasks['bilibili.check_subtitle_content'].s(),
+                celery_app.tasks['bilibili.translate_subtitle'].s()
             )
         },
         "speech_generation_chain": {
@@ -78,8 +78,8 @@ class ChainService:
                 "bilibili.upload_to_cos"
             ],
             "chain": lambda translated_data: chain(
-                celery_app.signature('bilibili.generate_speech', args=[translated_data]),
-                celery_app.signature('bilibili.upload_to_cos')
+                celery_app.tasks['bilibili.generate_speech'].s(translated_data),
+                celery_app.tasks['bilibili.upload_to_cos'].s()
             )
         }
     }

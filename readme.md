@@ -96,6 +96,7 @@ celery -A celery_app worker --loglevel=info
 
 celery -A celery_app worker --loglevel=info --queues=celery,math,data,io,bilibili --concurrency=4
 
+source venv/bin/activate && celery -A celery_app worker --loglevel=info --queues=celery,math,data,io,bilibili --concurrency=4
 
 ```
 

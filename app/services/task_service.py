@@ -2,26 +2,28 @@
 import uuid
 from typing import Dict, Any
 from app.database import ORMDatabaseManager
-from app.services.chain_service import ChainService
+from app.services.math_chain_service import MathChainService
+from app.services.bilibili_chain_service import BilibiliChainService
 
 class TaskService:
     """任务服务（基于ORM）"""
     
     def __init__(self, db_manager: ORMDatabaseManager = None):
         self.db_manager = db_manager or ORMDatabaseManager()
-        self.chain_service = ChainService()
+        self.math_chain_service = MathChainService()
+        self.bilibili_chain_service = BilibiliChainService()
     
     def submit_task(self, a: int, b: int, operation_chain: str) -> Dict[str, Any]:
         """提交数学任务"""
         # 验证任务链
-        if operation_chain not in self.chain_service.OPERATION_CHAINS:
+        if not self.math_chain_service.is_valid_chain(operation_chain):
             raise ValueError(f"不支持的数学任务链: {operation_chain}")
         
         # 生成任务ID
         task_id = str(uuid.uuid4())
         
         # 创建任务链
-        task_chain = self.chain_service.create_math_chain(operation_chain, a, b)
+        task_chain = self.math_chain_service.create_chain(operation_chain, {"a": a, "b": b})
         
         # 提交到Celery
         celery_result = task_chain.apply_async()
@@ -40,21 +42,21 @@ class TaskService:
             "task_id": task_id,
             "celery_result": celery_result,
             "celery_task_id": celery_task_id,
-            "description": self.chain_service.get_chain_description(operation_chain),
+            "description": self.math_chain_service.get_chain_description(operation_chain),
             "task_record": task_record
         }
     
     def submit_bilibili_task(self, video_data: Dict[str, Any], chain_name: str = "video_processing_chain") -> Dict[str, Any]:
         """提交Bilibili视频处理任务"""
         # 验证任务链
-        if chain_name not in self.chain_service.BILIBILI_CHAINS:
+        if not self.bilibili_chain_service.is_valid_chain(chain_name):
             raise ValueError(f"不支持的Bilibili任务链: {chain_name}")
         
         # 生成任务ID
         task_id = str(uuid.uuid4())
         
         # 创建任务链
-        task_chain = self.chain_service.create_bilibili_chain(chain_name, video_data)
+        task_chain = self.bilibili_chain_service.create_chain(chain_name, video_data)
         
         # 提交到Celery
         celery_result = task_chain.apply_async()
@@ -72,7 +74,7 @@ class TaskService:
             "task_id": task_id,
             "celery_result": celery_result,
             "celery_task_id": celery_task_id,
-            "description": self.chain_service.get_chain_description(chain_name),
+            "description": self.bilibili_chain_service.get_chain_description(chain_name),
             "task_record": task_record,
             "video_info": {
                 "bvid": video_data.get("bvid"),

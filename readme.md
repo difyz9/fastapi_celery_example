@@ -3,9 +3,21 @@
 
 一个基于Celery和FastAPI的分布式任务处理系统，采用现代化的app层架构和SQLAlchemy ORM，支持数学运算任务链的异步执行和Web界面管理。
 
-## 🚀 核心特性
+## # 启动FastAPI后端服务 (终端2)
+```bash
+# 确保在项目根目录并激活虚拟环境
+cd /path/to/task_chain
+source venv/bin/activate
 
-- **🏗️ 现代化架构**: 独立app层设计，分离API、服务、数据库和模型层
+# 使用新的分离服务架构启动API服务器
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# 或者使用简化命令
+python -c "import uvicorn; from app.main import app; uvicorn.run(app, host='0.0.0.0', port=8000)"
+```
+
+### 3. 启动前端Web服务器 (终端3)
+```bash️ 现代化架构**: 独立app层设计，分离API、服务、数据库和模型层
 - **🗄️ ORM自动建表**: 基于SQLAlchemy的数据库模型，自动创建和管理表结构
 - **⚡ 异步任务处理**: 基于Celery的分布式任务队列
 - **📊 数学运算链**: 支持多种数学运算的组合执行

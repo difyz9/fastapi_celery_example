@@ -2,12 +2,14 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from app.models import MathRequest, TaskResponse
 from app.services import TaskService
+from app.services.math_chain_service import MathChainService
 
 # 创建数学任务路由器
 router = APIRouter(prefix="/math", tags=["数学任务"])
 
 # 服务实例
 task_service = TaskService()
+math_chain_service = MathChainService()
 
 @router.post("/submit", response_model=TaskResponse)
 async def submit_math_task(request: MathRequest, background_tasks: BackgroundTasks):
@@ -48,11 +50,15 @@ async def submit_math_task(request: MathRequest, background_tasks: BackgroundTas
 @router.get("/chains")
 async def get_math_chains():
     """获取可用的数学运算链"""
-    from app.services import ChainService
     return {
-        "math_chains": ChainService.OPERATION_CHAINS,
+        "math_chains": math_chain_service.get_available_chains(),
         "descriptions": {
             name: info["description"] 
-            for name, info in ChainService.OPERATION_CHAINS.items()
+            for name, info in math_chain_service.OPERATION_CHAINS.items()
+        },
+        "chain_execution_info": {
+            "execution_mode": "Sequential Chain (顺序执行)",
+            "supported_operations": ["加法", "乘法", "除法", "幂运算", "开方", "复数运算", "斐波那契", "二次方程"],
+            "enhanced_features": ["错误处理", "状态跟踪", "结果验证"]
         }
     }

@@ -1,14 +1,15 @@
 # app/api/bilibili_routes.py - Bilibili视频处理路由
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from app.models import BilibiliVideoCreate, TaskResponse
-from app.services import TaskService, ChainService
+from app.services import TaskService
+from app.services.bilibili_chain_service import BilibiliChainService
 
 # 创建Bilibili任务路由器
 router = APIRouter(prefix="/bilibili", tags=["Bilibili视频处理"])
 
 # 服务实例
 task_service = TaskService()
-chain_service = ChainService()
+bilibili_chain_service = BilibiliChainService()
 
 @router.post("/submit", response_model=TaskResponse)
 async def submit_bilibili_task(
@@ -75,7 +76,7 @@ async def get_bilibili_chains():
     """获取可用的Bilibili处理链详情"""
     chains_info = {}
     
-    for name, info in chain_service.BILIBILI_CHAINS.items():
+    for name, info in bilibili_chain_service.BILIBILI_CHAINS.items():
         chains_info[name] = {
             "description": info["description"],
             "tasks": info.get("tasks", []),
@@ -91,7 +92,7 @@ async def get_bilibili_chains():
         "bilibili_chains": chains_info,
         "descriptions": {
             name: info["description"] 
-            for name, info in chain_service.BILIBILI_CHAINS.items()
+            for name, info in bilibili_chain_service.BILIBILI_CHAINS.items()
         },
         "chain_execution_info": {
             "execution_mode": "Sequential Chain (顺序执行)",

@@ -1,4 +1,11 @@
-# app/api/__init__.py
-from .routes import router
+"""
+API模块初始化
+"""
 
-__all__ = ["router"]
+from .tasks import router as tasks_router
+from .system import router as system_router
+
+__all__ = [
+    "tasks_router",
+    "system_router",
+]

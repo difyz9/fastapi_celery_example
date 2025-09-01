@@ -1,6 +1,12 @@
-# app/models/__init__.py
-from .request_models import MathRequest
-from .response_models import TaskResponse, TaskStatusResponse, TaskListResponse
-from .database_models import TaskRecord, Base
+"""
+数据模型模块 - 统一导出
+"""
+from .task import TaskRequest, TaskResponse, TaskStatus, ProcessorResult, PipelineResult
 
-__all__ = ["MathRequest", "TaskResponse", "TaskStatusResponse", "TaskListResponse", "TaskRecord", "Base"]
+__all__ = [
+    "TaskRequest",
+    "TaskResponse", 
+    "TaskStatus",
+    "ProcessorResult",
+    "PipelineResult"
+]

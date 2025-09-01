@@ -1,5 +1,10 @@
-# app/services/__init__.py
-from .task_service import TaskService
-from .chain_service import ChainService
+"""
+服务模块初始化
+"""
 
-__all__ = ["TaskService", "ChainService"]
+from .task_service import TaskService, task_service
+
+__all__ = [
+    "TaskService",
+    "task_service",
+]

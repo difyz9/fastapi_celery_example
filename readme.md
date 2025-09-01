@@ -15,6 +15,7 @@
 (base) apple@apple15 fastapi_celery % python3.12 -m venv venv
 (base) apple@apple15 fastapi_celery % source venv/bin/activate
 
+
 source venv/bin/activate && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 

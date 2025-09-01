@@ -3,17 +3,13 @@
 """
 
 from .video_tasks import (
-    process_subtitles_task,
-    detect_language_simple_task,
-    translate_subtitles_task,
-    generate_audio_task,
+    process_video_subtitles,
+    detect_language_only,
     TaskBuilder,
 )
 
 __all__ = [
-    "process_subtitles_task",
-    "detect_language_simple_task",
-    "translate_subtitles_task", 
-    "generate_audio_task",
+    "process_video_subtitles",
+    "detect_language_only",
     "TaskBuilder",
 ]

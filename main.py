@@ -34,7 +34,7 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(system_router)  # 系统信息和健康检查
-app.include_router(tasks_router, prefix="/api/v1")  # 任务管理API
+app.include_router(tasks_router, prefix="/tasks")  # 任务管理API
 
 @app.get("/")
 def read_root():

@@ -12,6 +12,17 @@
 - 🏥 **健康检查**: 系统组件状态监控
 - 🧪 **测试覆盖**: 完整的单元测试
 
+(base) apple@apple15 fastapi_celery % python3.12 -m venv venv
+(base) apple@apple15 fastapi_celery % source venv/bin/activate
+
+source venv/bin/activate && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+
+source venv/bin/activate && celery -A app.core.celery_app worker --loglevel=info
+
+
+source venv/bin/activate && python test_pipeline.py
+
 ## 项目结构
 
 ```
@@ -112,6 +123,10 @@ celery -A app.core.celery_app flower --port=5555
 
 # 3. 启动 FastAPI
 python main.py
+
+
+
+
 ```
 
 ### 6. 访问服务

@@ -16,10 +16,20 @@ class Settings(BaseSettings):
     # API 配置
     API_V1_STR: str = "/api/v1"
     
-    # Redis & Celery 配置（学习重点）
+    # Redis 配置
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: str = "6379"
+    REDIS_DB: str = "0"
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    
+    # Celery 配置（学习重点）
     CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0") 
     CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+    
+    # 任务配置
+    TASK_TIMEOUT: str = "3600"
+    MAX_RETRIES: str = "3"
+    MAX_FILE_SIZE: str = "50"
     
     # 日志配置
     LOG_LEVEL: str = "INFO"
